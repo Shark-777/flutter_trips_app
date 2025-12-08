@@ -1,0 +1,17 @@
+# Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Generated
+*.g.dart
+*.freezed.dart
