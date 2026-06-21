@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/back_button.dart';
 
 class CitySearchPage extends StatefulWidget {
   const CitySearchPage({super.key});
@@ -70,6 +71,7 @@ class _CitySearchPageState extends State<CitySearchPage> {
               },
             ),
           ),
+          const AppBackButton(),
         ],
       ),
     );

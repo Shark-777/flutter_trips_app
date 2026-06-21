@@ -1,20 +1,83 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/trips_provider.dart';
+import 'providers/cars_provider.dart';
+import 'theme/app_theme.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const HomePreviewApp());
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePreviewApp extends StatelessWidget {
+  const HomePreviewApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => TripsProvider()),
+        ChangeNotifierProvider(create: (_) => CarsProvider()),
+      ],
+      child: MaterialApp(
+        title: 'HomePage Preview',
+        theme: AppTheme.lightTheme,
+        debugShowCheckedModeBanner: false,
+        home: const IPhoneFrame(),
+      ),
+    );
+  }
+}
+
+/// iPhone 16 Pro Max frame (430x932)
+class IPhoneFrame extends StatelessWidget {
+  const IPhoneFrame({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1a1a2e),
+      body: Center(
+        child: Container(
+          width: 430,
+          height: 932,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(50),
+            border: Border.all(color: Colors.grey.shade800, width: 8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(42),
+            child: const HomePagePreview(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Preview версия HomePage без go_router
+class HomePagePreview extends StatefulWidget {
+  const HomePagePreview({super.key});
+
+  @override
+  State<HomePagePreview> createState() => _HomePagePreviewState();
+}
+
+class _HomePagePreviewState extends State<HomePagePreview> {
   final _fromController = TextEditingController();
   final _toController = TextEditingController();
   int _selectedIndex = 0;
-  bool _isDriver = false; // false = пассажир, true = водитель
+  bool _isDriver = false;
 
   @override
   void dispose() {
@@ -33,15 +96,12 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 1) {
-      context.go('/my-trips');
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF84CC16),
+      backgroundColor: const Color(0xFFE8E0F0),
       body: SafeArea(
         child: Column(
           children: [
@@ -64,7 +124,7 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF374151),
+                  color: Colors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
@@ -78,7 +138,7 @@ class _HomePageState extends State<HomePage> {
                       // Поле "Откуда"
                       Row(
                         children: [
-                          const Icon(Icons.location_on, color: Color(0xFFEC4899)),
+                          const Icon(Icons.location_on, color: Colors.orange),
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextField(
@@ -121,19 +181,31 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 24),
                       
-                      // Кнопки выбора типа (водитель/пассажир)
+                      // Кнопки выбора типа
                       Row(
                         children: [
-                          // Кнопка "Водитель"
                           Expanded(
                             child: GestureDetector(
                               onTap: () => setState(() => _isDriver = true),
                               child: Container(
                                 height: 80,
-                                decorat
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _isDriver ? Colors.deepPurple : Colors.grey.shade300,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: _isDriver ? Colors.deepPurple.withValues(alpha: 0.1) : Colors.white,
+                                ),
+                                child: Icon(
+                                  Icons.directions_car,
+                                  size: 40,
+                                  color: _isDriver ? Colors.deepPurple : Colors.black54,
+                                ),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 16),
-                          // Кнопка "Пассажир"
                           Expanded(
                             child: GestureDetector(
                               onTap: () => setState(() => _isDriver = false),
@@ -142,15 +214,15 @@ class _HomePageState extends State<HomePage> {
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                     color: !_isDriver ? Colors.deepPurple : Colors.grey.shade300,
-                                    width: 2, 
+                                    width: 2,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
-                                  color: !_isDriver ? Colors.deepPurple.withOpacity(0.1) : Colors.white,
+                                  color: !_isDriver ? Colors.deepPurple.withValues(alpha: 0.1) : Colors.white,
                                 ),
                                 child: Icon(
                                   Icons.hail,
                                   size: 40,
-                                  color: !_isDriver ? Colors.red : Colors.black54,
+                                  color: !_isDriver ? Colors.deepPurple : Colors.black54,
                                 ),
                               ),
                             ),
@@ -162,13 +234,8 @@ class _HomePageState extends State<HomePage> {
                       // Кнопка поиска
                       ElevatedButton(
                         onPressed: () {
-                          context.push(
-                            '/search-trip',
-                            extra: {
-                              'from': _fromController.text,
-                              'to': _toController.text,
-                              'isDriver': _isDriver,
-                            },
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Поиск: ${_fromController.text} → ${_toController.text}')),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -213,12 +280,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          // Кнопка "Выйти"
           TextButton(
-            onPressed: () {
-              context.read<AuthProvider>().signOut();
-              context.go('/login');
-            },
+            onPressed: () {},
             child: const Text(
               'Выйти',
               style: TextStyle(color: Colors.grey),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/back_button.dart';
 
 class SelectMarkWidget extends StatelessWidget {
   const SelectMarkWidget({super.key});
@@ -9,15 +10,22 @@ class SelectMarkWidget extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(title: const Text('Выбрать марку')),
-      body: ListView.builder(
-        itemCount: marks.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(marks[index]),
-            trailing: const Icon(Icons.arrow_forward),
-            onTap: () => Navigator.pop(context, marks[index]),
-          );
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: marks.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(marks[index]),
+                  trailing: const Icon(Icons.arrow_forward),
+                  onTap: () => Navigator.pop(context, marks[index]),
+                );
+              },
+            ),
+          ),
+          const AppBackButton(),
+        ],
       ),
     );
   }

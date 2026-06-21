@@ -55,10 +55,10 @@ class AppRouter {
       GoRoute(
         path: '/search-trip',
         builder: (context, state) {
-          final args = state.extra as Map<String, String>?;
+          final args = state.extra as Map<String, dynamic>?;
           return SearchTripPage(
-            from: args?['from'] ?? '',
-            to: args?['to'] ?? '',
+            from: args?['from']?.toString() ?? '',
+            to: args?['to']?.toString() ?? '',
           );
         },
       ),

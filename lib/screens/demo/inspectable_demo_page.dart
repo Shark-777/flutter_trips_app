@@ -32,8 +32,9 @@ class InspectableDemoPage extends StatelessWidget {
               // Welcome Text - Inspectable
               InspectableWidget(
                 componentName: 'WelcomeText',
-                componentPath: 'DemoPage.Body.WelcomeText',
-                initialProps: {
+                filePath: '/Users/shark777/Playwright Agent/flutter_trips_app/lib/screens/demo/inspectable_demo_page.dart',
+                lineNumber: 33,
+                editableProps: const {
                   'text': 'Добро пожаловать!',
                   'fontSize': 28.0,
                   'fontWeight': 'bold',
@@ -58,8 +59,9 @@ class InspectableDemoPage extends StatelessWidget {
               // Subtitle - Inspectable
               InspectableWidget(
                 componentName: 'SubtitleText',
-                componentPath: 'DemoPage.Body.SubtitleText',
-                initialProps: {
+                filePath: '/Users/shark777/Playwright Agent/flutter_trips_app/lib/screens/demo/inspectable_demo_page.dart',
+                lineNumber: 59,
+                editableProps: const {
                   'text': 'Кликните на любой элемент для редактирования',
                   'fontSize': 16.0,
                   'color': '#666666',
@@ -80,8 +82,9 @@ class InspectableDemoPage extends StatelessWidget {
               // Card Container - Inspectable
               InspectableWidget(
                 componentName: 'InfoCard',
-                componentPath: 'DemoPage.Body.InfoCard',
-                initialProps: {
+                filePath: '/Users/shark777/Playwright Agent/flutter_trips_app/lib/screens/demo/inspectable_demo_page.dart',
+                lineNumber: 81,
+                editableProps: const {
                   'backgroundColor': '#F3E8FF',
                   'borderRadius': 16.0,
                   'padding': 20.0,
@@ -127,8 +130,9 @@ class InspectableDemoPage extends StatelessWidget {
               // Action Button - Inspectable
               InspectableWidget(
                 componentName: 'ActionButton',
-                componentPath: 'DemoPage.Body.ActionButton',
-                initialProps: {
+                filePath: '/Users/shark777/Playwright Agent/flutter_trips_app/lib/screens/demo/inspectable_demo_page.dart',
+                lineNumber: 128,
+                editableProps: const {
                   'text': 'Начать',
                   'backgroundColor': '#7C3AED',
                   'textColor': '#FFFFFF',
@@ -169,8 +173,9 @@ class InspectableDemoPage extends StatelessWidget {
                   Expanded(
                     child: InspectableWidget(
                       componentName: 'StatCard1',
-                      componentPath: 'DemoPage.Body.Stats.Card1',
-                      initialProps: {
+                      filePath: '/Users/shark777/Playwright Agent/flutter_trips_app/lib/screens/demo/inspectable_demo_page.dart',
+                      lineNumber: 170,
+                      editableProps: const {
                         'value': '128',
                         'label': 'Поездок',
                         'iconColor': '#22C55E',
@@ -187,8 +192,9 @@ class InspectableDemoPage extends StatelessWidget {
                   Expanded(
                     child: InspectableWidget(
                       componentName: 'StatCard2',
-                      componentPath: 'DemoPage.Body.Stats.Card2',
-                      initialProps: {
+                      filePath: '/Users/shark777/Playwright Agent/flutter_trips_app/lib/screens/demo/inspectable_demo_page.dart',
+                      lineNumber: 188,
+                      editableProps: const {
                         'value': '4.9',
                         'label': 'Рейтинг',
                         'iconColor': '#F59E0B',

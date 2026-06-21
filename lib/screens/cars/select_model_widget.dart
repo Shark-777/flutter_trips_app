@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/back_button.dart';
 
 class SelectModelWidget extends StatelessWidget {
   const SelectModelWidget({super.key});
@@ -9,15 +10,22 @@ class SelectModelWidget extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(title: const Text('Выбрать модель')),
-      body: ListView.builder(
-        itemCount: models.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(models[index]),
-            trailing: const Icon(Icons.arrow_forward),
-            onTap: () => Navigator.pop(context, models[index]),
-          );
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: models.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(models[index]),
+                  trailing: const Icon(Icons.arrow_forward),
+                  onTap: () => Navigator.pop(context, models[index]),
+                );
+              },
+            ),
+          ),
+          const AppBackButton(),
+        ],
       ),
     );
   }

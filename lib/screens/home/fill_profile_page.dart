@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/back_button.dart';
 
 class FillProfilePage extends StatefulWidget {
   const FillProfilePage({super.key});
@@ -86,6 +87,8 @@ class _FillProfilePageState extends State<FillProfilePage> {
                   );
                 },
               ),
+              const SizedBox(height: 16),
+              const AppBackButton(),
             ],
           ),
         ),

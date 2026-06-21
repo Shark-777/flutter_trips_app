@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../widgets/back_button.dart';
 
 class CreateTripPage extends StatefulWidget {
   const CreateTripPage({super.key});
@@ -80,6 +81,8 @@ class _CreateTripPageState extends State<CreateTripPage> {
                     : null,
                 child: const Text('Создать поездку'),
               ),
+              const SizedBox(height: 16),
+              const AppBackButton(),
             ],
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/back_button.dart';
 
 class SMSPage extends StatefulWidget {
   const SMSPage({super.key});
@@ -136,6 +137,8 @@ class _SMSPageState extends State<SMSPage> {
                   return const SizedBox.shrink();
                 },
               ),
+              const SizedBox(height: 16),
+              const AppBackButton(customRoute: '/start'),
             ],
           ),
         ),

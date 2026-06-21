@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/back_button.dart';
 
 class SearchTripPage extends StatelessWidget {
   final String from;
@@ -53,6 +54,7 @@ class SearchTripPage extends StatelessWidget {
                 },
               ),
             ),
+            const AppBackButton(),
           ],
         ),
       ),

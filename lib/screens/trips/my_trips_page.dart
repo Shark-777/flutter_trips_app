@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../providers/trips_provider.dart';
+import '../../widgets/back_button.dart';
 
 class MyTripsPage extends StatefulWidget {
   const MyTripsPage({super.key});
@@ -88,6 +89,7 @@ class _MyTripsPageState extends State<MyTripsPage> {
         backgroundColor: const Color(0xFF7C3AED),
         child: const Icon(Icons.add),
       ),
+      bottomNavigationBar: const AppBackButton(),
     );
   }
 }

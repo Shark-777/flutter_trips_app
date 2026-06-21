@@ -64,13 +64,34 @@ class EditorBridgeService {
     }
   }
 
+  /// Маппинг имен файлов на роуты
+  static const Map<String, String> _fileToRoute = {
+    'start_page': '/start',
+    'sms_page': '/sms',
+    'home_page': '/home',
+    'fill_profile_page': '/profile',
+    'my_trips_page': '/my-trips',
+    'trip_page': '/trip/1',
+    'create_trip_page': '/create-trip',
+    'search_trip_page': '/search-trip',
+    'add_car_page': '/add-car',
+    'select_mark_widget': '/select-mark',
+    'select_model_widget': '/select-model',
+    'city_search_page': '/city-search',
+  };
+
   /// Выполнить навигацию
   static void _navigateTo(String route) {
     if (_router != null) {
-      debugPrint('[EditorBridge] Navigating to: $route');
-      // GoRouter ожидает путь, например /home
+      // Преобразуем имя файла в путь, если нужно
+      String actualRoute = route;
+      if (!route.startsWith('/')) {
+        actualRoute = _fileToRoute[route] ?? '/$route';
+      }
+      
+      debugPrint('[EditorBridge] Navigating to: $actualRoute (from: $route)');
       try {
-        _router!.go(route);
+        _router!.go(actualRoute);
       } catch (e) {
         debugPrint('[EditorBridge] Navigation error: $e');
       }

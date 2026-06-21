@@ -31,7 +31,7 @@ class TripsApp extends StatelessWidget {
         routerConfig: AppRouter.router,
         debugShowCheckedModeBanner: false,
         builder: (context, child) {
-          // InspectorWrapper внутри MaterialApp для доступа к Directionality
+          // InspectorWrapper для live preview и inspection
           return InspectorWrapper(child: child ?? const SizedBox());
         },
       ),

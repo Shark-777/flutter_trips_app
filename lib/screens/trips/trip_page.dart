@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../widgets/back_button.dart';
 
 class TripPage extends StatelessWidget {
   final String tripId;
@@ -36,6 +37,8 @@ class TripPage extends StatelessWidget {
               onPressed: () => context.go('/create-trip'),
               child: const Text('Пересоединиться в Поездку'),
             ),
+            const SizedBox(height: 16),
+            const AppBackButton(),
           ],
         ),
       ),

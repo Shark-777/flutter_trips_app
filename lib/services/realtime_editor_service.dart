@@ -24,6 +24,7 @@ class RealtimeEditorService {
   final _navigateController = StreamController<String>.broadcast();
   final _hotReloadController = StreamController<void>.broadcast();
   final _connectionController = StreamController<bool>.broadcast();
+  final _inspectAtController = StreamController<Map<String, double>>.broadcast();
 
   // Public streams for listening
   Stream<Map<String, dynamic>> get widgetUpdates => _widgetUpdateController.stream;
@@ -31,6 +32,7 @@ class RealtimeEditorService {
   Stream<String> get navigationCommands => _navigateController.stream;
   Stream<void> get hotReloadCommands => _hotReloadController.stream;
   Stream<bool> get connectionStatus => _connectionController.stream;
+  Stream<Map<String, double>> get inspectAtCommands => _inspectAtController.stream;
 
   bool get isConnected => _isConnected;
 
@@ -89,6 +91,11 @@ class RealtimeEditorService {
   /// Handle incoming messages
   void _handleMessage(dynamic data) {
     try {
+      // Ignore binary data (e.g., frames from other clients)
+      if (data is! String && data is! Map) {
+        return; // Skip binary data
+      }
+      
       final Map<String, dynamic> message = data is String
           ? jsonDecode(data)
           : Map<String, dynamic>.from(data);
@@ -117,6 +124,26 @@ class RealtimeEditorService {
           final route = message['route'] as String?;
           if (route != null) {
             _navigateController.add(route);
+          }
+          break;
+
+        case 'command':
+          // Handle commands from editor
+          final data = message['data'] as Map<String, dynamic>?;
+          if (data != null) {
+            final command = data['command'] as String?;
+            if (command == 'navigate') {
+              final page = data['page'] as String?;
+              if (page != null) {
+                debugPrint('[RealtimeEditor] Navigate command: $page');
+                _navigateController.add(page);
+              }
+            } else if (command == 'inspect_at') {
+              final x = (data['x'] as num?)?.toDouble() ?? 0;
+              final y = (data['y'] as num?)?.toDouble() ?? 0;
+              debugPrint('[RealtimeEditor] Inspect at: ($x, $y)');
+              _inspectAtController.add({'x': x, 'y': y});
+            }
           }
           break;
 
@@ -157,6 +184,15 @@ class RealtimeEditorService {
     });
   }
 
+  /// Send component tree to editor
+  void sendComponentTree(List<Map<String, dynamic>> components) {
+    _send({
+      'type': 'component_tree',
+      'components': components,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
   /// Send current widget tree to editor
   void sendWidgetTree(List<Map<String, dynamic>> tree) {
     _send({
@@ -171,6 +207,16 @@ class RealtimeEditorService {
       'type': 'app_state',
       'state': state,
     });
+  }
+
+  /// Send UI frame (screenshot) to editor
+  void sendFrame(String base64Image) {
+    if (_isConnected && _channel != null) {
+      _send({
+        'type': 'frame',
+        'image': base64Image,
+      });
+    }
   }
 
   /// Start heartbeat
@@ -197,5 +243,6 @@ class RealtimeEditorService {
     _navigateController.close();
     _hotReloadController.close();
     _connectionController.close();
+    _inspectAtController.close();
   }
 }
