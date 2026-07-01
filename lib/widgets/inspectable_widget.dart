@@ -31,6 +31,25 @@ class ComponentRegistry {
     _components.clear();
     _updateController.add(null);
   }
+
+  /// Find component by file path
+  Map<String, dynamic>? findByPath(String filePath) {
+    return _components.values.firstWhere(
+      (c) => c['filePath'] == filePath,
+      orElse: () => {},
+    );
+  }
+
+  /// Update component props
+  void updateProps(String id, Map<String, dynamic> newProps) {
+    if (_components.containsKey(id)) {
+      final current = _components[id]!;
+      final currentProps = Map<String, dynamic>.from(current['props'] ?? {});
+      currentProps.addAll(newProps);
+      _components[id] = {...current, 'props': currentProps};
+      _updateController.add(null);
+    }
+  }
 }
 
 /// Виджет-обёртка, делающая любой виджет инспектируемым
@@ -89,25 +108,119 @@ class _InspectableWidgetState extends State<InspectableWidget> {
   void _listenToUpdates() {
     // Слушаем обновления props от WebSocket
     _subscription = _realtimeService.widgetUpdates.listen((data) {
+      debugPrint('[InspectableWidget] Received update: $data');
+      
       final updatePath = data['filePath'] as String?;
       final updateId = data['id'] as String?;
       final updateLine = data['lineNumber'] as int?;
+      final componentName = data['name'] as String?;
       
-      // Проверяем соответствие по ID, пути файла или номеру строки
-      final matches = updateId == _componentId ||
-          (updatePath == widget.filePath && updateLine == widget.lineNumber);
+      // Проверяем соответствие по ID, пути файла, имени компонента или номеру строки
+      final matchesId = updateId == _componentId;
+      final matchesPath = updatePath != null && widget.filePath.contains(updatePath);
+      final matchesPathExact = updatePath == widget.filePath;
+      final matchesName = componentName == widget.componentName;
+      final matchesLine = updatePath == widget.filePath && updateLine == widget.lineNumber;
+      
+      final matches = matchesId || matchesPathExact || matchesLine || 
+                      (matchesPath && matchesName);
+      
+      debugPrint('[InspectableWidget] Match check - ID: $matchesId, Path: $matchesPath, Name: $matchesName');
       
       if (matches) {
         final newProps = data['props'] as Map<String, dynamic>? ?? {};
         
         if (mounted && newProps.isNotEmpty) {
+          debugPrint('[InspectableWidget] Applying props to ${widget.componentName}: $newProps');
+          
           setState(() {
-            _currentProps = {..._currentProps, ...newProps};
+            // Merge new props with current props
+            for (final entry in newProps.entries) {
+              _currentProps[entry.key] = _parseValue(entry.key, entry.value);
+            }
           });
-          debugPrint('🔄 Props updated for ${widget.componentName}: $newProps');
+          
+          // Update in registry
+          ComponentRegistry.instance.updateProps(_componentId, _currentProps);
+          
+          debugPrint('[InspectableWidget] Props applied: $_currentProps');
         }
       }
     });
+  }
+
+  /// Parse value based on property name (handle colors, numbers, etc.)
+  dynamic _parseValue(String propName, dynamic value) {
+    final lowerName = propName.toLowerCase();
+    
+    // Color parsing
+    if (lowerName.contains('color') || lowerName.contains('background')) {
+      if (value is String) {
+        return _parseColor(value);
+      } else if (value is int) {
+        return Color(value);
+      }
+    }
+    
+    // Number parsing for size properties
+    if (lowerName.contains('width') || lowerName.contains('height') ||
+        lowerName.contains('size') || lowerName.contains('radius') ||
+        lowerName.contains('padding') || lowerName.contains('margin') ||
+        lowerName.contains('elevation')) {
+      if (value is String) {
+        return double.tryParse(value) ?? value;
+      }
+    }
+    
+    return value;
+  }
+
+  /// Parse color from string (hex or named color)
+  Color? _parseColor(String colorStr) {
+    // Remove # if present
+    String hex = colorStr.replaceAll('#', '').trim();
+    
+    // Handle different hex formats
+    if (hex.length == 6) {
+      hex = 'FF$hex'; // Add alpha
+    } else if (hex.length == 3) {
+      // Expand shorthand (e.g., "F00" -> "FFFF0000")
+      hex = 'FF${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}';
+    }
+    
+    try {
+      final colorValue = int.parse(hex, radix: 16);
+      return Color(colorValue);
+    } catch (e) {
+      debugPrint('[InspectableWidget] Failed to parse color: $colorStr');
+      // Try named colors
+      return _namedColor(colorStr);
+    }
+  }
+
+  /// Get color by name
+  Color? _namedColor(String name) {
+    final colors = {
+      'red': Colors.red,
+      'blue': Colors.blue,
+      'green': Colors.green,
+      'yellow': Colors.yellow,
+      'orange': Colors.orange,
+      'purple': Colors.purple,
+      'pink': Colors.pink,
+      'cyan': Colors.cyan,
+      'white': Colors.white,
+      'black': Colors.black,
+      'grey': Colors.grey,
+      'gray': Colors.grey,
+      'amber': Colors.amber,
+      'teal': Colors.teal,
+      'indigo': Colors.indigo,
+      'deeppurple': Colors.deepPurple,
+      'lightblue': Colors.lightBlue,
+      'lightgreen': Colors.lightGreen,
+    };
+    return colors[name.toLowerCase()];
   }
 
   Map<String, dynamic>? _getBounds() {
@@ -144,7 +257,7 @@ class _InspectableWidgetState extends State<InspectableWidget> {
       'bounds': _getBounds(),
     });
 
-    debugPrint('👆 Selected: ${widget.componentName} at ${widget.filePath}:${widget.lineNumber}');
+    debugPrint('[InspectableWidget] Selected: ${widget.componentName} at ${widget.filePath}:${widget.lineNumber}');
   }
 
   @override

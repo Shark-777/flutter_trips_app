@@ -11,11 +11,11 @@ build/
 .vscode/
 *.iml
 .DS_Store
+.claude/
+.windsurf/
 
 # Generated
 *.g.dart
 *.freezed.dart
-
-# Local agent/editor artifacts
-.windsurf/
 .backup_*/
+*.log

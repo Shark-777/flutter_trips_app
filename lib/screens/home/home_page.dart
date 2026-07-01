@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF84CC16),
+      backgroundColor: const Color(0xFFFBC02D),
       body: SafeArea(
         child: Column(
           children: [
@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF374151),
+                  color: Colors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(24),
                     topRight: Radius.circular(24),
@@ -78,7 +78,7 @@ class _HomePageState extends State<HomePage> {
                       // Поле "Откуда"
                       Row(
                         children: [
-                          const Icon(Icons.location_on, color: Color(0xFFEC4899)),
+                          const Icon(Icons.location_on, color: Colors.orange),
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextField(
@@ -130,7 +130,21 @@ class _HomePageState extends State<HomePage> {
                               onTap: () => setState(() => _isDriver = true),
                               child: Container(
                                 height: 80,
-                                decorat
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: _isDriver ? Colors.deepPurple : Colors.grey.shade300,
+                                    width: 2,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: _isDriver ? Colors.deepPurple.withOpacity(0.1) : Colors.white,
+                                ),
+                                child: Icon(
+                                  Icons.directions_car,
+                                  size: 40,
+                                  color: _isDriver ? Colors.deepPurple : Colors.black54,
+                                ),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 16),
                           // Кнопка "Пассажир"
@@ -142,7 +156,7 @@ class _HomePageState extends State<HomePage> {
                                 decoration: BoxDecoration(
                                   border: Border.all(
                                     color: !_isDriver ? Colors.deepPurple : Colors.grey.shade300,
-                                    width: 2, 
+                                    width: 2,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                   color: !_isDriver ? Colors.deepPurple.withOpacity(0.1) : Colors.white,
@@ -150,7 +164,7 @@ class _HomePageState extends State<HomePage> {
                                 child: Icon(
                                   Icons.hail,
                                   size: 40,
-                                  color: !_isDriver ? Colors.red : Colors.black54,
+                                  color: !_isDriver ? Colors.deepPurple : Colors.black54,
                                 ),
                               ),
                             ),
@@ -172,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF5B4FCF),
+                          backgroundColor: const Color(0xFFFBC02D),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(

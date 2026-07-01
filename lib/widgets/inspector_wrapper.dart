@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:async';
 import '../services/editor_bridge_service.dart';
+import '../services/realtime_editor_service.dart';
 
 /// Enhanced InspectorWrapper that provides real widget inspection
 /// Similar to Flutter DevTools Widget Inspector
@@ -22,6 +24,9 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
   bool _isConnected = false;
   Offset? _lastTapPosition;
   RenderObject? _selectedRenderObject;
+  
+  // Current page/route for file path estimation
+  String _currentRoute = '/home';
   
   @override
   void initState() {
@@ -46,6 +51,16 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
           } else {
             _frameTimer?.cancel();
           }
+        });
+      }
+    });
+    
+    // Listen to navigation commands to track current page
+    EditorBridgeService.realtimeService.navigationCommands.listen((route) {
+      if (mounted) {
+        setState(() {
+          _currentRoute = route;
+          debugPrint('📍 Current route updated: $route');
         });
       }
     });
@@ -77,81 +92,97 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
         }
       }
     });
+  }
+  
+  /// Get file path from route
+  String _getFilePathFromRoute(String route) {
+    const basePath = '/Users/shark777/Playwright Agent/flutter_trips_app/lib/screens';
     
-    // Also try after 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted && _frameTimer == null) {
-        debugPrint('🎬 FORCE starting stream at 5s regardless of status');
-        setState(() {
-          _isConnected = true;
-        });
-        _startStreaming();
+    final routeToFile = {
+      '/': '$basePath/home/home_page.dart',
+      '/home': '$basePath/home/home_page.dart',
+      '/start': '$basePath/auth/start_page.dart',
+      '/sms': '$basePath/auth/sms_page.dart',
+      '/profile': '$basePath/profile/fill_profile_page.dart',
+      '/my-trips': '$basePath/trips/my_trips_page.dart',
+      '/trip': '$basePath/trips/trip_page.dart',
+      '/create-trip': '$basePath/trips/create_trip_page.dart',
+      '/search-trip': '$basePath/search/search_trip_page.dart',
+      '/add-car': '$basePath/car/add_car_page.dart',
+      '/select-mark': '$basePath/car/select_mark_widget.dart',
+      '/select-model': '$basePath/car/select_model_widget.dart',
+      '/city-search': '$basePath/search/city_search_page.dart',
+    };
+    
+    // Find matching route
+    for (final entry in routeToFile.entries) {
+      if (route.startsWith(entry.key)) {
+        return entry.value;
       }
-    });
-  }
-
-  @override
-  void dispose() {
-    _frameTimer?.cancel();
-    super.dispose();
-  }
-
-  // Handle remote tap inspection from editor
-  void _handleRemoteInspect(double normalizedX, double normalizedY) {
-    final RenderObject? rootRenderObject = context.findRenderObject();
-    if (rootRenderObject == null || rootRenderObject is! RenderBox) return;
+    }
     
-    final size = rootRenderObject.size;
-    
-    // Convert normalized coordinates to actual position
-    final actualX = normalizedX * size.width;
-    final actualY = normalizedY * size.height;
-    final position = Offset(actualX, actualY);
-    
-    debugPrint('🎯 Remote inspect at: ($actualX, $actualY)');
-    
-    // Do hit-test at position
-    final renderObject = _hitTest(position);
-    _selectedRenderObject = renderObject;
-    
-    // Extract and send widget info
-    final widgetInfo = _extractWidgetInfo(renderObject, position);
-    EditorBridgeService.sendWidgetInfo(widgetInfo);
-    
-    debugPrint('🔍 Remote inspected: ${widgetInfo['type']}');
-    
-    // Show feedback on device
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Selected: ${widgetInfo['type']}'),
-        duration: const Duration(milliseconds: 800),
-        backgroundColor: Colors.blue,
-      ),
-    );
+    return '$basePath/home/home_page.dart'; // Default
   }
 
   void _startStreaming() {
     _frameTimer?.cancel();
-    // 2-3 FPS to reduce flickering
-    _frameTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) async {
-      if (!_isConnected || !mounted) return;
-      try {
-        final boundary = _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-        if (boundary == null) return;
-        
-        // Capture image (lower pixelRatio = smaller file = less flicker)
-        final image = await boundary.toImage(pixelRatio: 0.5);
-        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        
-        if (byteData != null) {
-          final pngBytes = byteData.buffer.asUint8List();
-          final base64String = base64Encode(pngBytes);
-          EditorBridgeService.realtimeService.sendFrame(base64String);
-        }
-      } catch (e) {
-        // Ignore capture errors (frame skip)
-      }
+    debugPrint('🎬 Starting frame streaming...');
+    
+    // Stream frames at ~10 FPS
+    _frameTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      _captureAndSendFrame();
     });
+  }
+  
+  Future<void> _captureAndSendFrame() async {
+    if (!mounted || !_isConnected) return;
+    
+    try {
+      final RenderRepaintBoundary? boundary = 
+          _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      
+      if (boundary == null || !boundary.hasSize) return;
+      
+      final ui.Image image = await boundary.toImage(pixelRatio: 0.5);
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      
+      if (byteData != null) {
+        final base64Image = base64Encode(byteData.buffer.asUint8List());
+        EditorBridgeService.realtimeService.sendFrame(base64Image);
+      }
+      
+      image.dispose();
+    } catch (e) {
+      // Silently ignore frame capture errors
+    }
+  }
+  
+  /// Handle remote inspect command from editor
+  void _handleRemoteInspect(double x, double y) {
+    debugPrint('🎯 Remote inspect at: ($x, $y)');
+    
+    final renderObject = _hitTest(Offset(x, y));
+    _selectedRenderObject = renderObject;
+    
+    final widgetInfo = _extractWidgetInfo(renderObject, Offset(x, y));
+    EditorBridgeService.sendWidgetInfo(widgetInfo);
+    
+    debugPrint('📤 Sent widget info: ${widgetInfo['type']}');
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selected: ${widgetInfo['type']}'),
+          duration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
+  }
+  
+  @override
+  void dispose() {
+    _frameTimer?.cancel();
+    super.dispose();
   }
   
   /// Extract widget info from a RenderObject
@@ -160,16 +191,20 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
       return {
         'id': 'unknown_${DateTime.now().millisecondsSinceEpoch}',
         'type': 'Unknown',
+        'name': 'Unknown',
         'x': position.dx,
         'y': position.dy,
+        'filePath': _getFilePathFromRoute(_currentRoute),
       };
     }
 
     // Get the debug creator chain to find widget info
     String widgetType = 'Unknown';
+    String widgetName = 'Unknown';
     String? widgetText;
     double? width;
     double? height;
+    String? color;
     
     // Try to get widget type from debug info
     final debugCreator = renderObject.debugCreator;
@@ -179,6 +214,13 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
       final match = RegExp(r'(\w+)(?:\s|$)').firstMatch(creatorString);
       if (match != null) {
         widgetType = match.group(1) ?? 'Unknown';
+        widgetName = widgetType;
+      }
+      
+      // Try to find more specific widget name
+      final nameMatch = RegExp(r'(\w+Button|\w+Card|\w+Field|\w+Nav|\w+Bar)').firstMatch(creatorString);
+      if (nameMatch != null) {
+        widgetName = nameMatch.group(1) ?? widgetType;
       }
     }
     
@@ -191,12 +233,22 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
     // Try to find text content for RenderParagraph
     if (renderObject is RenderParagraph) {
       widgetType = 'Text';
+      widgetName = 'Text';
       widgetText = renderObject.text.toPlainText();
+    }
+    
+    // Try to extract color from RenderDecoratedBox
+    if (renderObject is RenderDecoratedBox) {
+      final decoration = renderObject.decoration;
+      if (decoration is BoxDecoration && decoration.color != null) {
+        color = '#${decoration.color!.value.toRadixString(16).substring(2).toUpperCase()}';
+      }
     }
     
     return {
       'id': 'widget_${renderObject.hashCode}',
       'type': widgetType,
+      'name': widgetName,
       'text': widgetText,
       'width': width,
       'height': height,
@@ -204,7 +256,8 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
       'y': position.dy,
       'fontSize': widgetType == 'Text' ? 16 : null,
       'fontWeight': 'normal',
-      'color': '#000000',
+      'color': color ?? '#7C3AED',
+      'filePath': _getFilePathFromRoute(_currentRoute),
     };
   }
 
@@ -238,6 +291,14 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
   Widget build(BuildContext context) {
     final inspectEnabled = _inspectMode || EditorBridgeService.inspectModeEnabled;
     
+    // Update current route from Navigator
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final route = ModalRoute.of(context)?.settings.name;
+      if (route != null && route != _currentRoute) {
+        _currentRoute = route;
+      }
+    });
+    
     return RepaintBoundary(
       key: _globalKey,
       child: Stack(
@@ -257,7 +318,7 @@ class _InspectorWrapperState extends State<InspectorWrapper> {
                   final widgetInfo = _extractWidgetInfo(renderObject, details.globalPosition);
                   EditorBridgeService.sendWidgetInfo(widgetInfo);
                   
-                  debugPrint('🔍 Inspected: ${widgetInfo['type']}');
+                  debugPrint('🔍 Inspected: ${widgetInfo['type']} at ${widgetInfo['filePath']}');
                   
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

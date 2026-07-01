@@ -109,8 +109,26 @@ class RealtimeEditorService {
           break;
 
         case 'widget_update':
-          // Widget properties were updated in editor
+          // Widget properties were updated in editor (legacy format)
           _widgetUpdateController.add(message['widget'] ?? message);
+          break;
+
+        case 'propUpdate':
+          // Property update from Editor (new format from Flutter_Mac_App)
+          final path = message['path'] as String?;
+          final propName = message['propName'] as String?;
+          final propValue = message['propValue'];
+          
+          if (path != null && propName != null) {
+            debugPrint('[RealtimeEditor] PropUpdate: $propName = $propValue for $path');
+            
+            // Convert to widget update format for InspectableWidget
+            final updateData = {
+              'filePath': path,
+              'props': {propName: propValue},
+            };
+            _widgetUpdateController.add(updateData);
+          }
           break;
 
         case 'inspect_mode':
@@ -129,18 +147,18 @@ class RealtimeEditorService {
 
         case 'command':
           // Handle commands from editor
-          final data = message['data'] as Map<String, dynamic>?;
-          if (data != null) {
-            final command = data['command'] as String?;
+          final cmdData = message['data'] as Map<String, dynamic>?;
+          if (cmdData != null) {
+            final command = cmdData['command'] as String?;
             if (command == 'navigate') {
-              final page = data['page'] as String?;
+              final page = cmdData['page'] as String?;
               if (page != null) {
                 debugPrint('[RealtimeEditor] Navigate command: $page');
                 _navigateController.add(page);
               }
             } else if (command == 'inspect_at') {
-              final x = (data['x'] as num?)?.toDouble() ?? 0;
-              final y = (data['y'] as num?)?.toDouble() ?? 0;
+              final x = (cmdData['x'] as num?)?.toDouble() ?? 0;
+              final y = (cmdData['y'] as num?)?.toDouble() ?? 0;
               debugPrint('[RealtimeEditor] Inspect at: ($x, $y)');
               _inspectAtController.add({'x': x, 'y': y});
             }
